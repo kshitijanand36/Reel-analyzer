@@ -1,0 +1,361 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Reel Analyzer</title>
+    <style>
+        * { margin: 0; padding: 0; box-sizing: border-box; }
+
+        body {
+            font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, sans-serif;
+            background: #0a0a0a;
+            color: #e0e0e0;
+            min-height: 100vh;
+        }
+
+        .container {
+            max-width: 720px;
+            margin: 0 auto;
+            padding: 40px 20px;
+        }
+
+        header {
+            text-align: center;
+            margin-bottom: 40px;
+        }
+
+        h1 {
+            font-size: 2.2rem;
+            font-weight: 700;
+            background: linear-gradient(135deg, #f09433, #e6683c, #dc2743, #cc2366, #bc1888);
+            -webkit-background-clip: text;
+            -webkit-text-fill-color: transparent;
+            margin-bottom: 8px;
+        }
+
+        header p {
+            color: #888;
+            font-size: 1rem;
+        }
+
+        .input-section {
+            display: flex;
+            gap: 12px;
+            margin-bottom: 32px;
+        }
+
+        input[type="text"] {
+            flex: 1;
+            padding: 14px 18px;
+            border: 1px solid #333;
+            border-radius: 12px;
+            background: #151515;
+            color: #fff;
+            font-size: 1rem;
+            outline: none;
+            transition: border-color 0.2s;
+        }
+
+        input[type="text"]:focus {
+            border-color: #dc2743;
+        }
+
+        input[type="text"]::placeholder {
+            color: #555;
+        }
+
+        button {
+            padding: 14px 28px;
+            border: none;
+            border-radius: 12px;
+            background: linear-gradient(135deg, #f09433, #e6683c, #dc2743, #cc2366, #bc1888);
+            color: #fff;
+            font-size: 1rem;
+            font-weight: 600;
+            cursor: pointer;
+            transition: opacity 0.2s, transform 0.1s;
+            white-space: nowrap;
+        }
+
+        button:hover { opacity: 0.9; }
+        button:active { transform: scale(0.98); }
+        button:disabled {
+            opacity: 0.5;
+            cursor: not-allowed;
+        }
+
+        .loading {
+            text-align: center;
+            padding: 60px 0;
+            display: none;
+        }
+
+        .loading.active { display: block; }
+
+        .spinner {
+            width: 40px;
+            height: 40px;
+            border: 3px solid #333;
+            border-top-color: #dc2743;
+            border-radius: 50%;
+            animation: spin 0.8s linear infinite;
+            margin: 0 auto 16px;
+        }
+
+        @keyframes spin { to { transform: rotate(360deg); } }
+
+        .loading p {
+            color: #888;
+            font-size: 0.95rem;
+        }
+
+        .error {
+            background: #1a0a0a;
+            border: 1px solid #4a1515;
+            border-radius: 12px;
+            padding: 16px 20px;
+            color: #f87171;
+            margin-bottom: 24px;
+            display: none;
+        }
+
+        .error.active { display: block; }
+
+        .results {
+            display: none;
+        }
+
+        .results.active { display: block; }
+
+        .card {
+            background: #151515;
+            border: 1px solid #252525;
+            border-radius: 16px;
+            padding: 24px;
+            margin-bottom: 20px;
+        }
+
+        .card h2 {
+            font-size: 1.3rem;
+            margin-bottom: 4px;
+            color: #fff;
+        }
+
+        .card .topic-badge {
+            display: inline-block;
+            padding: 4px 12px;
+            border-radius: 20px;
+            background: linear-gradient(135deg, #f09433, #dc2743);
+            color: #fff;
+            font-size: 0.8rem;
+            font-weight: 600;
+            margin: 8px 0 12px;
+        }
+
+        .card .summary {
+            font-size: 1.05rem;
+            line-height: 1.6;
+            color: #ccc;
+            margin-bottom: 16px;
+        }
+
+        .meta-row {
+            display: flex;
+            gap: 20px;
+            flex-wrap: wrap;
+            margin-bottom: 16px;
+        }
+
+        .meta-item {
+            display: flex;
+            align-items: center;
+            gap: 6px;
+            color: #999;
+            font-size: 0.9rem;
+        }
+
+        .meta-item span { color: #fff; font-weight: 500; }
+
+        .section-title {
+            font-size: 0.85rem;
+            text-transform: uppercase;
+            letter-spacing: 0.05em;
+            color: #666;
+            margin-bottom: 10px;
+            font-weight: 600;
+        }
+
+        .key-points {
+            list-style: none;
+            padding: 0;
+        }
+
+        .key-points li {
+            padding: 8px 0;
+            border-bottom: 1px solid #1e1e1e;
+            color: #bbb;
+            line-height: 1.5;
+        }
+
+        .key-points li:last-child { border-bottom: none; }
+
+        .key-points li::before {
+            content: ">";
+            color: #dc2743;
+            font-weight: 700;
+            margin-right: 10px;
+        }
+
+        .context-box {
+            background: #1a1a1a;
+            border-radius: 10px;
+            padding: 16px;
+            margin-top: 12px;
+            color: #aaa;
+            line-height: 1.6;
+        }
+
+        .sentiment-badge {
+            display: inline-block;
+            padding: 4px 12px;
+            border-radius: 20px;
+            font-size: 0.8rem;
+            font-weight: 600;
+        }
+
+        .sentiment-positive { background: #0a2a0a; color: #4ade80; border: 1px solid #166534; }
+        .sentiment-negative { background: #2a0a0a; color: #f87171; border: 1px solid #7f1d1d; }
+        .sentiment-mixed { background: #2a2a0a; color: #facc15; border: 1px solid #854d0e; }
+        .sentiment-neutral { background: #1a1a1a; color: #999; border: 1px solid #333; }
+    </style>
+</head>
+<body>
+    <div class="container">
+        <header>
+            <h1>Reel Analyzer</h1>
+            <p>Paste an Instagram Reel link to extract what it's about</p>
+        </header>
+
+        <div class="input-section">
+            <input type="text" id="urlInput" placeholder="https://www.instagram.com/reel/..." />
+            <button id="analyzeBtn" onclick="analyze()">Analyze</button>
+        </div>
+
+        <div class="error" id="error"></div>
+
+        <div class="loading" id="loading">
+            <div class="spinner"></div>
+            <p>Downloading reel & analyzing content...</p>
+            <p style="margin-top:4px;font-size:0.85rem;color:#666;">This may take 15-30 seconds</p>
+        </div>
+
+        <div class="results" id="results">
+            <div class="card">
+                <div class="meta-row" id="metaRow"></div>
+                <h2 id="title"></h2>
+                <div>
+                    <span class="topic-badge" id="topic"></span>
+                    <span class="sentiment-badge" id="sentiment"></span>
+                </div>
+                <p class="summary" id="summary"></p>
+            </div>
+
+            <div class="card">
+                <div class="section-title">Key Points</div>
+                <ul class="key-points" id="keyPoints"></ul>
+            </div>
+
+            <div class="card">
+                <div class="section-title">Context</div>
+                <div class="context-box" id="context"></div>
+            </div>
+
+            <div class="card">
+                <div class="section-title">Audience Reaction</div>
+                <div class="context-box" id="engagement"></div>
+            </div>
+        </div>
+    </div>
+
+    <script>
+        const input = document.getElementById('urlInput');
+        input.addEventListener('keydown', e => { if (e.key === 'Enter') analyze(); });
+
+        async function analyze() {
+            const url = input.value.trim();
+            if (!url) return;
+
+            const btn = document.getElementById('analyzeBtn');
+            const loading = document.getElementById('loading');
+            const error = document.getElementById('error');
+            const results = document.getElementById('results');
+
+            btn.disabled = true;
+            loading.classList.add('active');
+            error.classList.remove('active');
+            results.classList.remove('active');
+
+            try {
+                const res = await fetch('/api/analyze', {
+                    method: 'POST',
+                    headers: { 'Content-Type': 'application/json' },
+                    body: JSON.stringify({ url }),
+                });
+
+                if (!res.ok) {
+                    const data = await res.json();
+                    throw new Error(data.detail || 'Analysis failed');
+                }
+
+                const data = await res.json();
+                renderResults(data);
+            } catch (e) {
+                error.textContent = e.message;
+                error.classList.add('active');
+            } finally {
+                btn.disabled = false;
+                loading.classList.remove('active');
+            }
+        }
+
+        function renderResults(data) {
+            const { metadata, analysis } = data;
+
+            // Meta row
+            const metaRow = document.getElementById('metaRow');
+            const date = new Date(metadata.date).toLocaleDateString('en-US', {
+                year: 'numeric', month: 'short', day: 'numeric'
+            });
+            metaRow.innerHTML = `
+                <div class="meta-item">@ <span>${metadata.owner}</span></div>
+                <div class="meta-item">Likes: <span>${metadata.likes.toLocaleString()}</span></div>
+                <div class="meta-item">Comments: <span>${metadata.comment_count}</span></div>
+                <div class="meta-item">${date}</div>
+            `;
+
+            document.getElementById('title').textContent = analysis.title;
+            document.getElementById('topic').textContent = analysis.topic;
+            document.getElementById('summary').textContent = analysis.summary;
+            document.getElementById('context').textContent = analysis.context;
+            document.getElementById('engagement').textContent = analysis.engagement_summary;
+
+            // Sentiment
+            const sentEl = document.getElementById('sentiment');
+            const sent = (analysis.sentiment || '').toLowerCase();
+            sentEl.textContent = analysis.sentiment;
+            sentEl.className = 'sentiment-badge sentiment-' +
+                (sent.includes('positive') ? 'positive' :
+                 sent.includes('negative') ? 'negative' :
+                 sent.includes('mixed') ? 'mixed' : 'neutral');
+
+            // Key points
+            const kp = document.getElementById('keyPoints');
+            kp.innerHTML = (analysis.key_points || [])
+                .map(p => `<li>${p}</li>`).join('');
+
+            document.getElementById('results').classList.add('active');
+        }
+    </script>
+</body>
+</html>
